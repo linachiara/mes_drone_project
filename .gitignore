@@ -1,0 +1,16 @@
+# PX4 Build & Logs
+simulation/px4/build/
+simulation/px4/log/
+simulation/px4/tmp/
+
+# Gazebo temp files
+simulation/px4/Tools/simulation/gazebo-classic/sitl_gazebo-classic/.gazebo/tmp
+*.swp
+*.bak
+*.orig
+
+# Python / IDE
+__pycache__/
+*.pyc
+.vscode/
+.idea/
