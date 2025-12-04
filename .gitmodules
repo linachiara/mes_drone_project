@@ -1,0 +1,3 @@
+[submodule "simulation/px4"]
+	path = simulation/px4
+	url = git@github.com:linachiara/PX4-Autopilot.git
