@@ -21,7 +21,7 @@ build-essential ccache
 sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable jammy main" > /etc/apt/sources.list.d/gazebo-stable.list'
 wget https://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
 sudo apt update
-sudo apt install gazebo11
+sudo apt install gazebo
 ```
 
 Confirm installation:
@@ -38,11 +38,11 @@ gazebo --version
 1. Clone the main project:
 
 ```bash
-git clone <your-repo-url> mes_drone_project
+git clone git@github.com:linachiara/mes_drone_project.git mes_drone_project --recursive
 cd mes_drone_project
 ```
 
-2. Initialize and update submodules recursively:
+2. If you forgot the "--recursive" or the submodules haven't loaded 
 
 ```bash
 git submodule update --init --recursive
@@ -54,10 +54,14 @@ git submodule update --init --recursive
 git submodule status
 ```
 
-4. Pull latest changes from submodules (optional):
+---
+
+## To run the simulation with the right Gazebo version
 
 ```bash
-git submodule update --remote --merge
+sudo apt remove gz-harmonic
+sudo apt install aptitude
+sudo aptitude install gazebo libgazebo11 libgazebo-dev
 ```
 
 ---
@@ -66,32 +70,55 @@ git submodule update --remote --merge
 
 ### Build without camera window
 
+You can always start the simulation with this command:
 ```bash
 cd ~/mes_drone_project/simulation/px4
-make px4_sitl gazebo
+make px4_sitl gazebo-classic_typhoon_h480
 ```
 
-### Build with camera window
+Or use the script:
 
+1. Run once
 ```bash
-cd ~/mes_drone_project/simulation/px4
-source /opt/ros/humble/setup.bash
-make px4_sitl gazebo
+cd ~/mes_drone_project/simulation/
+bash ./Tools/setup/ubuntu.sh
 ```
 
----
+2. Start simulation always with
+```bash
+cd ~/mes_drone_project/simulation/
+./simulation/run_sim.sh
+```
 
-## Start Camera Script (in a separate terminal)
+## Build with camera window
+
+### Installation of QGroundControl
+
+1. Disable Modem Manager
+```bash
+sudo systemctl stop ModemManager.service
+sudo systemctl disable ModemManager.service
+```
+After the project you can enable it again with the commands
+```bash
+sudo systemctl enable ModemManager.service
+sudo systemctl start ModemManager.service
+```
+2. Install QGroundControl
+   Go to this website and follow the instructions:
+   https://docs.qgroundcontrol.com/Stable_V5.0/en/qgc-user-guide/getting_started/download_and_install.html
+
+## Use QGroundControl
+Start the simulation in one terminal, QGroundControl in another
 
 ```bash
-cd ~/mes_drone_project/scripts/
-python3 camera_view.py
+cd to/the/folder/you/put/your/script
+./QGroundControl-x86_64.AppImage
 ```
 
 ---
 
 ## Notes
 
-- PX4 is included as a **submodule**. Always use `--recursive` when cloning the repository.
-- For any changes inside the PX4 submodule, commit inside the submodule first, then update the reference in the main repo.
-- Recommended Ubuntu version: 22.04 LTS.
+- You can't commit any changes in submodules that are not forked yet.
+- If you want to do that, you must fork the submodule first.
