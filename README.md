@@ -118,6 +118,12 @@ cd to/the/folder/you/put/your/script
 
 ---
 
+## Build Docker-Image
+```bash
+cd mes_drone_project/docker
+docker build --platform=linux/arm64 -t virtual-pi .
+```
+
 ## Run Docker-Image
 
 Exchange the path correctly
