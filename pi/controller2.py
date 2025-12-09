@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
 
+##### TRY TO IMPLEMENT CONTINUOUS DRONE MOVEMENT #######
+################# DOES NOT WORK YET #################### 
+
+
 import asyncio
 
 from mavsdk import System

@@ -1,40 +1,61 @@
 #!/usr/bin/env python3
+
+
 import asyncio
+
 from mavsdk import System
 from mavsdk.offboard import OffboardError, VelocityBodyYawspeed
 
-async def manual_control():
+
+async def move(drone, forward=0.0, right=0.0, down=0.0, yaw_rate=0.0, duration=1.0):
+    """
+    Bewegt den Drohnenkörper in eine Richtung für eine kurze Dauer.
+    """
+    await drone.offboard.set_velocity_body(
+        VelocityBodyYawspeed(
+            forward_m_s=forward,
+            right_m_s=right,
+            down_m_s=down,
+            yawspeed_deg_s=yaw_rate
+        )
+    )
+    await asyncio.sleep(duration)
+    # Stoppen nach der Bewegung
+    await drone.offboard.set_velocity_body(
+        VelocityBodyYawspeed(0.0, 0.0, 0.0, 0.0)
+    )
+
+
+async def run():
+    """Does Offboard control using velocity body coordinates."""
+
     drone = System()
     await drone.connect(system_address="udpin://0.0.0.0:14540")
 
-    # Wait for connection
     print("Waiting for drone to connect...")
     async for state in drone.core.connection_state():
         if state.is_connected:
             print("-- Connected to drone!")
             break
 
-    # Wait for global position estimate
-    print("Waiting for global position estimate...")
+    print("Waiting for drone to have a global position estimate...")
     async for health in drone.telemetry.health():
         if health.is_global_position_ok and health.is_home_position_ok:
             print("-- Global position estimate OK")
             break
-    await asyncio.sleep(2)
-        
-    # Arm the drone
-    print("Arming...")
-    await drone.action.arm()
-    
-    # send initial setpoint
-    await drone.offboard.set_velocity_body(VelocityBodyYawspeed(0.0, 0.0, 0.0, 0.0))
-    await asyncio.sleep(2)
 
-    # Start in offboard mode
-#    try:
-#        await drone.offboard.start()
-#    except OffboardError as e:
-#        print(f"Offboard start failed: {e._result.result}")
+    print("-- Arming")
+    await drone.action.arm()
+
+    
+    # Takeoff to 2 meters
+    print("Taking off...")
+    await drone.action.takeoff()
+    await asyncio.sleep(6)  # wait for the drone to lift off
+
+    print("-- Setting initial setpoint")
+    await drone.offboard.set_velocity_body(VelocityBodyYawspeed(0.0, 0.0, 0.0, 0.0))
+
     print("-- Starting offboard")
     try:
         await drone.offboard.start()
@@ -46,11 +67,9 @@ async def manual_control():
         print("-- Disarming")
         await drone.action.disarm()
         return
+    
 
-    # Takeoff to 2 meters
-    print("Taking off...")
-    await drone.action.takeoff()
-    await asyncio.sleep(6)  # wait for the drone to lift off
+
 
     print("\nManual control keys:")
     print(" w/s : forward/backward")
@@ -59,71 +78,58 @@ async def manual_control():
     print(" q/e : yaw left/right")
     print(" x   : exit\n")
 
-    # Movement state
-    velocity_x = 0.0
-    velocity_y = 0.0
-    velocity_z = 0.0
-    yaw_rate = 0.0
-
     try:
         while True:
-            key = input("Enter command: ")
+            key = input("Enter Command: ").lower()
 
             if key == "w":
-                velocity_x = 1.0
+                await move(drone, forward=1.0, duration=1.0)
             elif key == "s":
-                velocity_x = -1.0
+                await move(drone, forward=-1.0, duration=1.0)
             elif key == "a":
-                velocity_y = -1.0
+                await move(drone, right=-1.0, duration=1.0)
             elif key == "d":
-                velocity_y = 1.0
+                await move(drone, right=1.0, duration=1.0)
             elif key == "r":
-                velocity_z = -0.5  # negative = up
+                await move(drone, down=-0.5, duration=1.0)  # up
             elif key == "f":
-                velocity_z = 0.5   # positive = down
+                await move(drone, down=0.5, duration=1.0)   # down
             elif key == "q":
-                yaw_rate = -30.0
+                await move(drone, yaw_rate=-30.0, duration=1.0)
             elif key == "e":
-                yaw_rate = 30.0
+                await move(drone, yaw_rate=30.0, duration=1.0)
             elif key == "x":
                 break
             else:
-                # Reset movement on invalid key
-                velocity_x = 0.0
-                velocity_y = 0.0
-                velocity_z = 0.0
-                yaw_rate = 0.0
-
-            # Send the velocity command continuously for 1 second
-            for _ in range(10):
-                await drone.offboard.set_velocity_body(
-                    VelocityBodyYawspeed(
-                        forward_m_s=velocity_x,
-                        right_m_s=velocity_y,
-                        down_m_s=velocity_z,
-                        yawspeed_deg_s=yaw_rate
-                    )
-                )
-                await asyncio.sleep(0.1)
+                print("Invalid Command!")
 
     except Exception as e:
         print(f"Exception: {e}")
 
-    finally:
-        print("Stopping offboard and disarming...")
-        try:
-            await drone.offboard.stop()
-        except Exception:
-            pass
-        try:
+
+
+
+
+    
+    print("-- Stopping offboard")
+    try:
+        await drone.offboard.stop()
+    except OffboardError as error:
+        print(
+            f"Stopping offboard mode failed with error code: \
+              {error._result.result}"
+        )
+    try:
             await drone.action.land()
-        except Exception:
+    except Exception:
             pass
-        try:
+    try:
             await drone.action.disarm()
-        except Exception:
+    except Exception:
             pass
-        print("Manual control session ended.")
+    print("Manual control session ended.")
+
 
 if __name__ == "__main__":
-    asyncio.run(manual_control())
+    # Run the asyncio loop
+    asyncio.run(run())
