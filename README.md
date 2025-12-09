@@ -118,6 +118,17 @@ cd to/the/folder/you/put/your/script
 
 ---
 
+## Run Docker-Image
+
+Exchange the path correctly
+```bash
+docker run --rm -it \
+  --platform=linux/arm64 \
+  --network=host \
+  -v /home/linachiara/mes_drone_project/pi:/pi \    
+  virtual-pi
+```
+
 ## Notes
 
 - You can't commit any changes in submodules that are not forked yet.
