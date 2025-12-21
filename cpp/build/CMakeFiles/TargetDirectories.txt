@@ -1,0 +1,4 @@
+/home/clockhandle/mes_drone_project/cpp/build/CMakeFiles/drone_vision.dir
+/home/clockhandle/mes_drone_project/cpp/build/CMakeFiles/flight_controller.dir
+/home/clockhandle/mes_drone_project/cpp/build/CMakeFiles/edit_cache.dir
+/home/clockhandle/mes_drone_project/cpp/build/CMakeFiles/rebuild_cache.dir
