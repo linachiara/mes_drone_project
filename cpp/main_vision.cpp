@@ -29,9 +29,15 @@ void sendCommand(string msg) {
 int main() {
     setupUDP();
 
-    std::string gst_pipeline = 
+    string gst_pipeline = 
         "udpsrc port=5600 caps=\"application/x-rtp, media=(string)video, encoding-name=(string)H264, payload=(int)96\" ! "
         "rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! appsink drop=true sync=false max-buffers=1";
+        
+    /*string gst_pipeline = 
+        "udpsrc port=5600 caps=\"application/x-rtp, media=(string)video, encoding-name=(string)H264, payload=(int)96\" ! "
+        "rtph264depay ! h264parse ! avdec_h264 ! "
+        "videoconvert ! video/x-raw, format=BGR ! " 
+        "appsink drop=true sync=false";*/
 
     VideoCapture cap(gst_pipeline, CAP_GSTREAMER);
 
@@ -45,9 +51,12 @@ int main() {
 
     while (true) {
         // Flush buffer for low latency
-        for(int i=0; i<5; i++) cap.grab();
-        
-        cap.read(frame);
+        //for(int i=0; i<5; i++) cap.grab();
+        // 1. Read frame
+        if (!cap.read(frame)) {
+            cout << "Waiting for video packets..." << endl;
+            continue; 
+        }
         if (frame.empty()) break;
 
         // 1. HSV Conversion
@@ -104,10 +113,10 @@ int main() {
         // Send to Python
         sendCommand(packet);
 
-        //imshow("Drone Vision", frame);
-        //imshow("Mask", mask);
+        imshow("Drone Vision", frame);
+        imshow("Mask", mask);
         
-        //if (waitKey(1) == 27) break;
+        if (waitKey(1) == 27) break;
     }
 
     close(sock);
